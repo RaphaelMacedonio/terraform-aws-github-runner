@@ -58,7 +58,9 @@ function generateRunnerServiceConfig(githubRunnerConfig: CreateGitHubRunnerConfi
   if (githubRunnerConfig.runnerType === 'Org' && githubRunnerConfig.runnerGroup !== undefined) {
     config.push(`--runnergroup ${githubRunnerConfig.runnerGroup}`);
   }
-
+  logger.info("################################");
+  logger.info("Config: ", config);
+  logger.info("################################");
   return config;
 }
 
@@ -67,9 +69,12 @@ async function getGithubRunnerRegistrationToken(githubRunnerConfig: CreateGitHub
     githubRunnerConfig.runnerType === 'Org'
       ? await ghClient.actions.createRegistrationTokenForOrg({ org: githubRunnerConfig.runnerOwner })
       : await ghClient.actions.createRegistrationTokenForRepo({
-          owner: githubRunnerConfig.runnerOwner.split('/')[0],
-          repo: githubRunnerConfig.runnerOwner.split('/')[1],
-        });
+        owner: githubRunnerConfig.runnerOwner.split('/')[0],
+        repo: githubRunnerConfig.runnerOwner.split('/')[1],
+      });
+  logger.info("################################");
+  logger.info("registrationToken: ", registrationToken.data.token);
+  logger.info("################################");
   return registrationToken.data.token;
 }
 
@@ -86,16 +91,16 @@ async function getInstallationId(
   const githubClient = await createOctoClient(ghAuth.token, ghesApiUrl);
   return enableOrgLevel
     ? (
-        await githubClient.apps.getOrgInstallation({
-          org: payload.repositoryOwner,
-        })
-      ).data.id
+      await githubClient.apps.getOrgInstallation({
+        org: payload.repositoryOwner,
+      })
+    ).data.id
     : (
-        await githubClient.apps.getRepoInstallation({
-          owner: payload.repositoryOwner,
-          repo: payload.repositoryName,
-        })
-      ).data.id;
+      await githubClient.apps.getRepoInstallation({
+        owner: payload.repositoryOwner,
+        repo: payload.repositoryName,
+      })
+    ).data.id;
 }
 
 async function isJobQueued(githubInstallationClient: Octokit, payload: ActionRequestMessage): Promise<boolean> {
@@ -121,6 +126,10 @@ export async function createRunners(
   ec2RunnerConfig: CreateEC2RunnerConfig,
   ghClient: Octokit,
 ): Promise<void> {
+  logger.info("################################");
+  logger.info("createRunners - I'm here:130");
+  logger.info("################################");
+  
   const token = await getGithubRunnerRegistrationToken(githubRunnerConfig, ghClient);
 
   const runnerServiceConfig = generateRunnerServiceConfig(githubRunnerConfig, token);
@@ -159,7 +168,7 @@ export async function scaleUp(eventSource: string, payload: ActionRequestMessage
     logger.warn(`${payload.eventType} event is not supported in combination with ephemeral runners.`);
     throw Error(
       `The event type ${payload.eventType} is not supported in combination with ephemeral runners.` +
-        `Please ensure you have enabled workflow_job events.`,
+      `Please ensure you have enabled workflow_job events.`,
     );
   }
   const ephemeral = ephemeralEnabled && payload.eventType === 'workflow_job';

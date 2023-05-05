@@ -129,6 +129,11 @@ function removeTokenForLogging(config: string[]): string[] {
 }
 
 export async function createRunner(runnerParameters: Runners.RunnerInputParameters): Promise<void> {
+  logger.info("################################");
+  logger.info("createRunner - I'm here:133");
+  logger.info("################################");
+  logger.info("config: ", runnerParameters);
+  
   logger.debug('Runner configuration.', {
     runner: {
       configuration: {
